@@ -1,7 +1,7 @@
 # MultipleView_Geometry_in_Computer_Vision
 # Concepts
 ## 1. Planar Geometry
-- 2차원 사원평면
+- 2차원 사영평면
   - 1) 점과 선
     - (1) 선의 동차 표현(Homogeneous Representation of Lines)
       - l = (a, b, c)ᵀ
