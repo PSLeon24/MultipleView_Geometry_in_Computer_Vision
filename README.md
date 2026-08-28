@@ -133,17 +133,56 @@ real estimation run on real outliers.
 ---
 
 # Important Results
-- (1) The necessary and sufficient condition for a point x to lie on a line l is xᵀl = lᵀx = x·l = 0
-- (2) The intersection x of two lines l and l' is x = l X l' (X: cross product)
-- (3) The line passing through two points x and x' is l = x X x' (X: cross product)
-- (4) The principle of duality: every theorem of two-dimensional projective geometry has a dual theorem obtained by exchanging the roles of points and lines
-- (5) Points transform as x' = Hx; lines transform as l' = H⁻ᵀl
-- (6) A projectivity of P² has 8 dof and is determined by 4 point correspondences in general position
-- (7) The cross ratio of four collinear points is invariant under any projectivity
-- (8) The camera centre C is the right null vector of P: PC = 0
-- (9) x'ᵀFx = 0 for every correspondence; F is rank 2 with 7 dof, and Fe = Fᵀe' = 0
-- (10) E = K'ᵀFK has singular values (σ, σ, 0) and 5 dof, decomposing into (R, t) up to four solutions resolved by cheirality
-- (11) Two views determine the scene up to a projective transformation; π∞ upgrades it to affine and Ω∞ to metric
+
+Grouped by what they are used for. Each is stated in the form it gets applied in,
+not the form it is proved in.
+
+### Incidence and duality in P²
+- (1) A point x lies on a line l iff **xᵀl = lᵀx = 0**
+- (2) The intersection of two lines: **x = l × l'**
+- (3) The line through two points: **l = x × x'**
+- (4) **Duality**: every theorem of 2D projective geometry has a dual obtained by exchanging the words point and line. (2) and (3) are the same statement read two ways
+- (5) A conic through 5 points is determined uniquely; a conic has 5 degrees of freedom
+
+### Transformations
+- (6) Points transform as **x' = Hx**; lines transform as **l' = H⁻ᵀl**. Applying H to a line is the most common bug in a homography implementation
+- (7) A projectivity of P² has **8 dof** and is fixed by 4 point correspondences in general position, no 3 collinear
+- (8) A conic transforms as **C' = H⁻ᵀ C H⁻¹**
+- (9) The **cross ratio** of 4 collinear points is invariant under every projectivity, and it is the only such invariant
+- (10) An affinity is exactly a projectivity that maps **l∞ to itself**. This is the dividing line between the affine and projective rungs, and it is why recovering l∞ is what upgrades a projective reconstruction to affine
+- (11) The **circular points** I = (1, i, 0)ᵀ and J = (1, −i, 0)ᵀ are fixed by a similarity and by nothing weaker. Identifying them in an image metrically rectifies the plane
+
+### Cameras
+- (12) **x = PX** with P = K[R | t], 11 dof
+- (13) The camera centre C is the **right null vector**: PC = 0
+- (14) Back-projection gives a **ray**, not a point: X(λ) = P⁺x + λC. Everything two-view geometry does is a consequence of this one lost dimension
+- (15) A plane maps to the image by a homography, so any planar scene is a 2D problem
+- (16) The image of the absolute conic is **ω = (KKᵀ)⁻¹**. It depends only on K, never on R or t, which is what makes autocalibration possible at all
+- (17) For orthogonal directions, **v₁ᵀ ω v₂ = 0**. Three mutually orthogonal vanishing points therefore give three equations and calibrate a camera from one photograph
+
+### Two views
+- (18) **x'ᵀ F x = 0** for every correspondence
+- (19) F is **rank 2** with **7 dof** — 9 entries, minus 1 for scale, minus 1 for det F = 0. An estimate that skips the rank-2 enforcement produces epipolar lines that do not meet at a point
+- (20) Epipolar lines: **l' = Fx** and **l = Fᵀx'**
+- (21) The epipoles are the null vectors: **Fe = 0**, **Fᵀe' = 0**
+- (22) Given F, a camera pair is **P = [I | 0]**, **P' = [[e']ₓF | e']** — so F determines the geometry only **up to a projective transformation of space**
+- (23) F is unchanged by a projective transformation of the scene, which is exactly why an uncalibrated reconstruction cannot be metric
+- (24) **E = K'ᵀ F K**, with **5 dof** and singular values **(σ, σ, 0)**
+- (25) E decomposes into (R, t) in **four** ways; the correct one is the single choice putting reconstructed points in front of both cameras (**cheirality**)
+- (26) The **essential matrix is metric, the fundamental matrix is not** — this is the whole practical difference calibration makes
+
+### Estimation
+- (27) Each point correspondence gives **2 independent linear equations** for a homography, so 4 points determine H; each gives **1** for F, so 8 points determine it linearly
+- (28) **Normalization before the DLT is not optional**: translate the centroid to the origin and scale so the mean distance is √2. Skipping it is the most common reason a correct implementation gives a poor result
+- (29) The DLT minimizes an **algebraic** error, which is not the quantity of interest. The standard recipe is DLT for initialization, then Levenberg-Marquardt on the **geometric** (reprojection) error
+- (30) RANSAC needs **N = log(1−p) / log(1−(1−ε)ˢ)** samples. For s = 4 and 30% outliers this is a few hundred — cheap, which is why there is no excuse for least squares on contaminated matches
+- (31) Two views with noise give rays that **do not intersect**, so triangulation is an optimization. The optimal two-view solution is the root of a **degree-6 polynomial** — a closed-form global optimum, not an iterative one
+
+### Reconstruction
+- (32) Two uncalibrated views determine the scene up to a **projective** transformation (15 dof of ambiguity)
+- (33) Identifying **π∞** upgrades projective to affine; identifying **Ω∞** upgrades affine to metric. That is the entire ladder of autocalibration
+- (34) Bundle adjustment minimizes total reprojection error over all cameras and points at once. Its Jacobian is **block-sparse** because each point is seen by few cameras, and the Schur complement exploiting that sparsity is what makes thousands of cameras tractable
+- (35) Bundle adjustment **polishes and does not rescue**: it needs a good initialization and converges to a local minimum
 
 ---
 
